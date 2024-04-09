@@ -1,46 +1,50 @@
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
+kind: Route
+apiVersion: route.openshift.io/v1
 metadata:
-  name: spring-boot-docker
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
+  name: spring-boot-docker-route
+  labels:
+    app: spring-boot-docker
 spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        backend:
-          serviceName: spring-boot-docker
-          servicePort: 8080
+  to:
+    kind: Service
+    name: spring-boot-docker
+  tls: null
+  port:
+    targetPort: http
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    name: spring-boot-docker
   name: spring-boot-docker
+  labels:
+    app: spring-boot-docker
 spec:
   ports:
     - port: 8080
+      name: http
   selector:
     app: spring-boot-docker
-
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spring-boot-docker
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: spring-boot-docker
   template:
     metadata:
       labels:
         app: spring-boot-docker
     spec:
       containers:
-      - name: spring-boot-docker
-        image: itstarting/spring-boot-docker
-        ports:
-        - containerPort: 8080
+        - name: myapp
+          image: quay.io/rh-ee-ksaha/test-arm-build:master
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
